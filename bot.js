@@ -35,6 +35,39 @@ bot.command('catalog', (ctx) => {
   });
 });
 
+const fs = require('fs');
+
+bot.command('add', async (ctx) => {
+  const item = ctx.message.text.replace('/add ', '');
+  const products = {
+    'Сталин-3000': 500,
+    'Постер PEAK': 1500,
+    'Кринж малый': 15000,
+    'Кринж большой': 3000
+  };
+  if (products[item]) {
+    let cart = [];
+    if (fs.existsSync('cart.json')) {
+      cart = JSON.parse(fs.readFileSync('cart.json'));
+    }
+    cart.push({ userId: ctx.from.id, item, price: products[item] });
+    fs.writeFileSync('cart.json', JSON.stringify(cart));
+    ctx.reply(`${item} добавлен в корзину (${products[item]}₽).`);
+  } else {
+    ctx.reply('Товар не найден. Используйте /catalog.');
+  }
+});
+
+bot.on('web_app_data', (ctx) => {
+  const data = ctx.webAppData.data.json();
+  let cart = [];
+  if (fs.existsSync('cart.json')) {
+    cart = JSON.parse(fs.readFileSync('cart.json'));
+  }
+  const userCart = cart.filter(item => item.userId === ctx.from.id);
+  ctx.reply(`Получен заказ:\n${data}\nСохраненная корзина:\n${userCart.map(item => `${item.item} - ${item.price}₽`).join('\n')}`);
+});
+
 bot.on('callback_query', async (ctx) => {
   const category = ctx.callbackQuery.data;
   if (category === 'category_posters') {
