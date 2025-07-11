@@ -2,7 +2,6 @@ require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
@@ -10,18 +9,17 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// Webhook маршрут
 app.post('/webhook', (req, res) => {
   bot.handleUpdate(req.body);
   res.sendStatus(200);
 });
 
-// Явный маршрут для Mini App
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Команда /start
+let cart = [];
+
 bot.start((ctx) => {
   ctx.reply('Добро пожаловать в магазин!', {
     reply_markup: {
@@ -32,7 +30,6 @@ bot.start((ctx) => {
   });
 });
 
-// Команда /catalog
 bot.command('catalog', (ctx) => {
   ctx.reply('Выберите категорию:', {
     reply_markup: {
@@ -44,7 +41,6 @@ bot.command('catalog', (ctx) => {
   });
 });
 
-// Команда /add
 bot.command('add', async (ctx) => {
   const item = ctx.message.text.replace('/add ', '');
   const products = {
@@ -54,40 +50,36 @@ bot.command('add', async (ctx) => {
     'Кринж большой': 3000
   };
   if (products[item]) {
-    let cart = [];
-    if (fs.existsSync('cart.json')) {
-      cart = JSON.parse(fs.readFileSync('cart.json'));
-    }
     cart.push({ userId: ctx.from.id, item, price: products[item] });
-    fs.writeFileSync('cart.json', JSON.stringify(cart));
     ctx.reply(`${item} добавлен в корзину (${products[item]}₽). Используйте /start для оформления.`);
   } else {
-    ctx.reply('Товар не найден. Используйте /catalog для списка товаров.');
+    ctx.reply('Товар не найден. Используйте /catalog.');
   }
 });
 
-// Обработка callback_query
 bot.on('callback_query', async (ctx) => {
   const category = ctx.callbackQuery.data;
   if (category === 'category_posters') {
-    await ctx.reply('Товары в категории "Оригинальные постеры": Сталин-3000 (500₽), Постер "PEAK" (1500₽). Используйте /add для добавления в корзину.');
+    await ctx.reply('Товары в категории "Оригинальные постеры": Сталин-3000 (500₽), Постер "PEAK" (1500₽). Используйте /add.');
   } else if (category === 'category_creative') {
-    await ctx.reply('Товары в категории "Кринж от TR/BUTE": Кринж малый (15000₽), Кринж большой (3000₽). Используйте /add для добавления в корзину.');
+    await ctx.reply('Товары в категории "Кринж от TR/BUTE": Кринж малый (15000₽), Кринж большой (3000₽). Используйте /add.');
   }
-  await ctx.answerCallbackQuery();
+  await ctx.telegram.answerCallbackQuery(ctx.callbackQuery.id); // Исправлено
 });
 
-// Обработка заказов из Mini App
 bot.on('web_app_data', async (ctx) => {
+  console.log('Received web_app_data:', ctx.webAppData.data.json());
   const data = ctx.webAppData.data.json();
-  let cart = [];
-  if (fs.existsSync('cart.json')) {
-    cart = JSON.parse(fs.readFileSync('cart.json'));
-  }
   const userCart = cart.filter(item => item.userId === ctx.from.id);
   const message = `Получен заказ:\n${data}\nСохраненная корзина:\n${userCart.length ? userCart.map(item => `${item.item} - ${item.price}₽`).join('\n') : 'Пусто'}`;
   await ctx.reply(message);
-  await bot.telegram.sendMessage(1222932847, `Новый заказ от @${ctx.from.username || ctx.from.id}:\n${message}`);
+  try {
+    await bot.telegram.sendMessage(1222932847, `Новый заказ от @${ctx.from.username || ctx.from.id}:\n${message}`);
+    console.log('Admin notification sent to 1222932847');
+  } catch (error) {
+    console.error('Failed to send admin notification:', error);
+    await ctx.reply(`Ошибка отправки уведомления админу: ${error.message}`);
+  }
 });
 
 app.listen(process.env.PORT || 3000, async () => {
