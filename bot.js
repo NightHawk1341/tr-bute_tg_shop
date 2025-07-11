@@ -65,7 +65,8 @@ bot.on('web_app_data', (ctx) => {
     cart = JSON.parse(fs.readFileSync('cart.json'));
   }
   const userCart = cart.filter(item => item.userId === ctx.from.id);
-  ctx.reply(`Получен заказ:\n${data}\nСохраненная корзина:\n${userCart.map(item => `${item.item} - ${item.price}₽`).join('\n')}`);
+  ctx.reply(`Получен заказ:\n${data}\nСвяжитесь с покупателем.`);
+  bot.telegram.sendMessage(1222932847, `Новый заказ:\n${data}`);
 });
 
 bot.on('callback_query', async (ctx) => {
