@@ -22,11 +22,10 @@
     if (tg) tg.expand();
 
     const products = [
-      { id: 1, name: 'Сталин-3000', price: 500, category: 'Оригинальные постеры', image: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fgameguru.ru%2Fpublication%2Fgrazhdanin-delaet-nedopustimye-veshi-dmitrij-goblin-puchkov-prokommentiroval-prigovor-pervomu-rossijskomu-kiberprestupniku%2F&psig=AOvVaw0XnxapNWkl_dg4YuZUrKNn&ust=1752328775856000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCMidysP7tI4DFQAAAAAdAAAAABAE' },
-      { id: 2, name: 'постер "Peak"', price: 1500, category: 'Оригинальные постеры', image: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fstore.steampowered.com%2Fapp%2F3527290%2FPEAK%2F%3Fl%3Drussian&psig=AOvVaw28botbvhePvIreyhaut_GP&ust=1752328858111000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCOChzur7tI4DFQAAAAAdAAAAABAE' },
-      { id: 3, name: 'Кринж большой', price: 15000, category: 'Кринж от TR/BUTE', image: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fsupport.discord.com%2Fhc%2Ffr%2Fcommunity%2Fposts%2F4418710507287-Cringe-emoji&psig=AOvVaw2oLtHAw90CqPU6ODlRvGk8&ust=1752328931506000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCKD41478tI4DFQAAAAAdAAAAABAE' },
-      { id: 4, name: 'Кринж малый', price: 3000, category: 'Кринж от TR/BUTE', image: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fsupport.discord.com%2Fhc%2Ffr%2Fcommunity%2Fposts%2F4418710507287-Cringe-emoji&psig=AOvVaw2oLtHAw90CqPU6ODlRvGk8&ust=1752328931506000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCKD41478tI4DFQAAAAAdAAAAABAE' },
-
+      { id: 1, name: 'Сталин-3000', price: 500, category: 'Оригинальные постеры' },
+      { id: 2, name: 'Постер PEAK', price: 1500, category: 'Оригинальные постеры' },
+      { id: 3, name: 'Кринж малый', price: 15000, category: 'Кринж от TR/BUTE' },
+      { id: 4, name: 'Кринж большой', price: 3000, category: 'Кринж от TR/BUTE' }
     ];
     let cart = [];
 
@@ -36,7 +35,7 @@
       products.forEach(p => {
         const div = document.createElement('div');
         div.className = 'product';
-        div.innerHTML = '<img src="${p.image}" width="50" /> ${p.name} (${p.category}) - ${p.price}₽ <button onclick="addToCart(${p.id})">В корзину</button>';
+        div.innerHTML = `${p.name} (${p.category}) - ${p.price}₽ <button onclick="addToCart(${p.id})">В корзину</button>`;
         catalogDiv.appendChild(div);
       });
     }
@@ -46,6 +45,8 @@
       if (product) {
         cart.push(product);
         renderCart();
+      } else {
+        console.error('Product not found:', id);
       }
     }
 
@@ -61,7 +62,7 @@
       }
       const order = cart.map(item => `${item.name} - ${item.price}₽`).join('\n');
       if (tg) {
-        tg.sendData(`Заказ:\n${order}\nИтого: ${cart.reduce((sum, item) => sum + item.price, 0)}₽`);
+        tg.sendData(`Заказ из Mini App:\n${order}\nИтого: ${cart.reduce((sum, item) => sum + item.price, 0)}₽`);
       } else {
         console.log('Telegram Web App not available. Order:', order);
       }
