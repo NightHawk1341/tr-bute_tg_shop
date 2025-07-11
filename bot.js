@@ -50,6 +50,21 @@ bot.on('web_app_data', (ctx) => {
   ctx.reply(`Получен заказ:\n${data}\nСвяжитесь с покупателем для уточнения деталей.`);
 });
 
+bot.command('add', (ctx) => {
+  const item = ctx.message.text.replace('/add ', '');
+  const products = {
+    'Сталин-3000': 500,
+    'Постер PEAK': 1500,
+    'Кринж малый': 15000,
+    'Кринж большой': 3000
+  };
+  if (products[item]) {
+    ctx.reply(`${item} добавлен в корзину (${products[item]}₽). Используйте /start для оформления.`);
+  } else {
+    ctx.reply('Товар не найден. Используйте /catalog для списка товаров.');
+  }
+});
+
 app.listen(process.env.PORT || 3000, async () => {
   console.log(`Сервер запущен на порт ${process.env.PORT || 3000}`);
   await bot.telegram.setWebhook(`${process.env.RENDER_URL}/webhook`);
