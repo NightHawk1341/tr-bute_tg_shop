@@ -18,13 +18,20 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Эндпоинт для получения корзины
+app.get('/cart/:userId', (req, res) => {
+  const userId = parseInt(req.params.userId);
+  const userCart = cart.filter(item => item.userId === userId);
+  res.json(userCart);
+});
+
 let cart = [];
 
 bot.start((ctx) => {
   ctx.reply('Добро пожаловать в магазин!', {
     reply_markup: {
       inline_keyboard: [
-        [{ text: 'Открыть каталог', web_app: { url: process.env.RENDER_URL } }],
+        [{ text: 'Открыть каталог', web_app: { url: `${process.env.RENDER_URL}?userId=${ctx.from.id}` } }],
       ],
     },
   });
@@ -89,6 +96,12 @@ bot.command('testadmin', async (ctx) => {
   } catch (error) {
     ctx.reply(`Ошибка: ${error.message}`);
   }
+});
+
+app.post('/add-to-cart', (req, res) => {
+  const { userId, item, price } = req.body;
+  cart.push({ userId, item, price });
+  res.sendStatus(200);
 });
 
 app.listen(process.env.PORT || 3000, async () => {

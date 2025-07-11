@@ -19,12 +19,18 @@
 
   <script>
     const tg = window.Telegram?.WebApp;
+    let userId = null;
     if (tg) {
       tg.expand();
       console.log('Telegram Web App initialized');
+      userId = tg.initDataUnsafe?.user?.id;
     } else {
       console.log('Telegram Web App not available');
     }
+
+    // Получаем userId из URL, если не в Telegram
+    const urlParams = new URLSearchParams(window.location.search);
+    userId = userId || urlParams.get('userId');
 
     const products = [
       { id: 1, name: 'Сталин-3000', price: 500, category: 'Оригинальные постеры' },
@@ -33,6 +39,19 @@
       { id: 4, name: 'Кринж большой', price: 3000, category: 'Кринж от TR/BUTE' }
     ];
     let cart = [];
+
+    async function loadCart() {
+      if (userId) {
+        try {
+          const response = await fetch(`/cart/${userId}`);
+          cart = await response.json();
+          console.log('Cart loaded:', cart);
+          renderCart();
+        } catch (error) {
+          console.error('Failed to load cart:', error);
+        }
+      }
+    }
 
     function renderCatalog() {
       const catalogDiv = document.getElementById('catalog');
@@ -45,20 +64,28 @@
       });
     }
 
-    function addToCart(id) {
+    async function addToCart(id) {
       const product = products.find(p => p.id === id);
-      if (product) {
-        cart.push(product);
-        renderCart();
-        console.log('Added to cart:', product);
-      } else {
-        console.error('Product not found:', id);
+      if (product && userId) {
+        try {
+          // Отправляем товар на сервер
+          await fetch('/add-to-cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, item: product.name, price: product.price })
+          });
+          cart.push(product);
+          console.log('Added to cart:', product);
+          renderCart();
+        } catch (error) {
+          console.error('Failed to add to cart:', error);
+        }
       }
     }
 
     function renderCart() {
       const cartDiv = document.getElementById('cart');
-      cartDiv.innerHTML = cart.length ? cart.map(item => `${item.name} - ${item.price}₽`).join('<br>') : 'Корзина пуста';
+      cartDiv.innerHTML = cart.length ? cart.map(item => `${item.item || item.name} - ${item.price}₽`).join('<br>') : 'Корзина пуста';
     }
 
     function sendOrder() {
@@ -67,7 +94,7 @@
         console.log('Cart is empty');
         return;
       }
-      const order = cart.map(item => `${item.name} - ${item.price}₽`).join('\n');
+      const order = cart.map(item => `${item.item || item.name} - ${item.price}₽`).join('\n');
       const orderData = `Заказ из Mini App:\n${order}\nИтого: ${cart.reduce((sum, item) => sum + item.price, 0)}₽`;
       if (tg) {
         try {
@@ -82,6 +109,7 @@
       }
     }
 
+    loadCart();
     renderCatalog();
   </script>
 </body>
