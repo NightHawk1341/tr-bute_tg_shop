@@ -43,6 +43,7 @@
     async function loadCart() {
       if (userId) {
         try {
+          console.log('Loading cart for userId:', userId);
           const response = await fetch(`/cart/${userId}`);
           cart = await response.json();
           console.log('Cart loaded:', cart);
@@ -50,29 +51,19 @@
         } catch (error) {
           console.error('Failed to load cart:', error);
         }
+      } else {
+        console.error('No userId available');
       }
-    }
-
-    function renderCatalog() {
-      const catalogDiv = document.getElementById('catalog');
-      catalogDiv.innerHTML = '';
-      products.forEach(p => {
-        const div = document.createElement('div');
-        div.className = 'product';
-        div.innerHTML = `${p.name} (${p.category}) - ${p.price}₽ <button onclick="addToCart(${p.id})">В корзину</button>`;
-        catalogDiv.appendChild(div);
-      });
     }
 
     async function addToCart(id) {
       const product = products.find(p => p.id === id);
       if (product && userId) {
         try {
-          // Отправляем товар на сервер
           await fetch('/add-to-cart', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, item: product.name, price: product.price })
+            body: JSON.stringify({ userId: parseInt(userId), item: product.name, price: product.price })
           });
           cart.push(product);
           console.log('Added to cart:', product);
@@ -80,6 +71,8 @@
         } catch (error) {
           console.error('Failed to add to cart:', error);
         }
+      } else {
+        console.error('No product or userId');
       }
     }
 

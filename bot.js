@@ -10,24 +10,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 app.post('/webhook', (req, res) => {
+  console.log('Webhook received:', req.body);
   bot.handleUpdate(req.body);
   res.sendStatus(200);
 });
 
 app.get('/', (req, res) => {
+  console.log('Serving Mini App for userId:', req.query.userId);
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Эндпоинт для получения корзины
 app.get('/cart/:userId', (req, res) => {
   const userId = parseInt(req.params.userId);
+  console.log('Fetching cart for userId:', userId);
   const userCart = cart.filter(item => item.userId === userId);
   res.json(userCart);
+});
+
+app.post('/add-to-cart', (req, res) => {
+  const { userId, item, price } = req.body;
+  console.log('Adding to cart:', { userId, item, price });
+  cart.push({ userId, item, price });
+  res.sendStatus(200);
 });
 
 let cart = [];
 
 bot.start((ctx) => {
+  console.log('Start command from userId:', ctx.from.id);
   ctx.reply('Добро пожаловать в магазин!', {
     reply_markup: {
       inline_keyboard: [
@@ -38,6 +48,7 @@ bot.start((ctx) => {
 });
 
 bot.command('catalog', (ctx) => {
+  console.log('Catalog command from userId:', ctx.from.id);
   ctx.reply('Выберите категорию:', {
     reply_markup: {
       inline_keyboard: [
@@ -58,6 +69,7 @@ bot.command('add', async (ctx) => {
   };
   if (products[item]) {
     cart.push({ userId: ctx.from.id, item, price: products[item] });
+    console.log('Added to cart via /add:', { userId: ctx.from.id, item, price: products[item] });
     ctx.reply(`${item} добавлен в корзину (${products[item]}₽). Используйте /start для оформления.`);
   } else {
     ctx.reply('Товар не найден. Используйте /catalog.');
@@ -66,12 +78,13 @@ bot.command('add', async (ctx) => {
 
 bot.on('callback_query', async (ctx) => {
   const category = ctx.callbackQuery.data;
+  console.log('Callback query:', category, 'from userId:', ctx.from.id);
   if (category === 'category_posters') {
     await ctx.reply('Товары в категории "Оригинальные постеры": Сталин-3000 (500₽), Постер "PEAK" (1500₽). Используйте /add.');
   } else if (category === 'category_creative') {
     await ctx.reply('Товары в категории "Кринж от TR/BUTE": Кринж малый (15000₽), Кринж большой (3000₽). Используйте /add.');
   }
-  await ctx.telegram.answerCallbackQuery(ctx.callbackQuery.id);
+  await ctx.answerCallbackQuery(); // Исправлено
 });
 
 bot.on('web_app_data', async (ctx) => {
@@ -96,12 +109,6 @@ bot.command('testadmin', async (ctx) => {
   } catch (error) {
     ctx.reply(`Ошибка: ${error.message}`);
   }
-});
-
-app.post('/add-to-cart', (req, res) => {
-  const { userId, item, price } = req.body;
-  cart.push({ userId, item, price });
-  res.sendStatus(200);
 });
 
 app.listen(process.env.PORT || 3000, async () => {
