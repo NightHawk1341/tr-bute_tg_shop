@@ -64,7 +64,7 @@ bot.on('callback_query', async (ctx) => {
   } else if (category === 'category_creative') {
     await ctx.reply('Товары в категории "Кринж от TR/BUTE": Кринж малый (15000₽), Кринж большой (3000₽). Используйте /add.');
   }
-  await ctx.telegram.answerCallbackQuery(ctx.callbackQuery.id); // Исправлено
+  await ctx.telegram.answerCallbackQuery(ctx.callbackQuery.id);
 });
 
 bot.on('web_app_data', async (ctx) => {
@@ -79,6 +79,15 @@ bot.on('web_app_data', async (ctx) => {
   } catch (error) {
     console.error('Failed to send admin notification:', error);
     await ctx.reply(`Ошибка отправки уведомления админу: ${error.message}`);
+  }
+});
+
+bot.command('testadmin', async (ctx) => {
+  try {
+    await bot.telegram.sendMessage(1222932847, 'Тестовое уведомление');
+    ctx.reply('Тестовое уведомление отправлено админу');
+  } catch (error) {
+    ctx.reply(`Ошибка: ${error.message}`);
   }
 });
 
