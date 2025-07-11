@@ -19,7 +19,12 @@
 
   <script>
     const tg = window.Telegram?.WebApp;
-    if (tg) tg.expand();
+    if (tg) {
+      tg.expand();
+      console.log('Telegram Web App initialized');
+    } else {
+      console.log('Telegram Web App not available');
+    }
 
     const products = [
       { id: 1, name: 'Сталин-3000', price: 500, category: 'Оригинальные постеры' },
@@ -45,6 +50,7 @@
       if (product) {
         cart.push(product);
         renderCart();
+        console.log('Added to cart:', product);
       } else {
         console.error('Product not found:', id);
       }
@@ -58,13 +64,21 @@
     function sendOrder() {
       if (!cart.length) {
         alert('Корзина пуста!');
+        console.log('Cart is empty');
         return;
       }
       const order = cart.map(item => `${item.name} - ${item.price}₽`).join('\n');
+      const orderData = `Заказ из Mini App:\n${order}\nИтого: ${cart.reduce((sum, item) => sum + item.price, 0)}₽`;
       if (tg) {
-        tg.sendData(`Заказ из Mini App:\n${order}\nИтого: ${cart.reduce((sum, item) => sum + item.price, 0)}₽`);
+        try {
+          tg.sendData(orderData);
+          console.log('Order sent:', orderData);
+        } catch (error) {
+          console.error('Failed to send order:', error);
+          alert(`Ошибка отправки заказа: ${error.message}`);
+        }
       } else {
-        console.log('Telegram Web App not available. Order:', order);
+        console.log('Telegram Web App not available. Order:', orderData);
       }
     }
 
