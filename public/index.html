@@ -28,7 +28,6 @@
       console.log('Telegram Web App not available');
     }
 
-    // Получаем userId из URL, если не в Telegram
     const urlParams = new URLSearchParams(window.location.search);
     userId = userId || urlParams.get('userId');
 
