@@ -5,76 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Магазин</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-    .product { margin: 10px 0; }
-    button { padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+    body { font-family: Arial; padding: 10px; }
+    .product { margin: 5px 0; }
+    button { padding: 8px; background: #007bff; color: white; border: none; cursor: pointer; }
   </style>
 </head>
 <body>
-  <h1>Магазин</h1>
-  <h2>Каталог</h2>
+  <h3>Каталог</h3>
   <div id="catalog"></div>
-  <h2>Корзина</h2>
+  <h3>Корзина</h3>
   <div id="cart"></div>
   <button onclick="sendOrder()">Оформить заказ</button>
 
   <script>
-    // Telegram Web App API
-    const tg = window.Telegram.WebApp;
-    tg.expand(); // Раскрыть приложение на весь экран
+    const tg = window.Telegram?.WebApp;
+    if (tg) tg.expand();
 
-    // Пример товаров
     const products = [
       { id: 1, name: 'Сталин-3000', price: 500, category: 'Оригинальные постеры' },
-      { id: 2, name: 'Постер "PEAK"', price: 1500, category: 'Оригинальные постеры' },
-      { id: 3, name: 'Кринж малый', price: 15000, category: 'Кринж от TR/BUTE' },
-      { id: 4, name: 'Кринж большой', price: 3000, category: 'Кринж от TR/BUTE' },
-    ];
+      { id: 2, name: 'постер "Peak"', price: 1500, category: 'Оригинальные постеры' },
+      { id: 3, name: 'Кринж большой', price: 15000, category: 'Кринж от TR/BUTE' },
+      { id: 4, name: 'Кринж малый', price: 3000, category: 'Кринж от TR/BUTE' },
 
+    ];
     let cart = [];
 
-    // Отображение каталога
     function renderCatalog() {
       const catalogDiv = document.getElementById('catalog');
       catalogDiv.innerHTML = '';
-      products.forEach(product => {
-        const productDiv = document.createElement('div');
-        productDiv.className = 'product';
-        productDiv.innerHTML = `${product.name} (${product.category}) - ${product.price}₽ 
-          <button onclick="addToCart(${product.id})">Добавить в корзину</button>`;
-        catalogDiv.appendChild(productDiv);
+      products.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `${p.name} (${p.category}) - ${p.price}₽ <button onclick="addToCart(${p.id})">В корзину</button>`;
+        catalogDiv.appendChild(div);
       });
     }
 
-    // Добавление в корзину
-    function addToCart(productId) {
-      const product = products.find(p => p.id === productId);
-      cart.push(product);
-      renderCart();
+    function addToCart(id) {
+      const product = products.find(p => p.id === id);
+      if (product) {
+        cart.push(product);
+        renderCart();
+      }
     }
 
-    // Отображение корзины
     function renderCart() {
       const cartDiv = document.getElementById('cart');
-      cartDiv.innerHTML = '';
-      cart.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.innerHTML = `${item.name} - ${item.price}₽`;
-        cartDiv.appendChild(itemDiv);
-      });
+      cartDiv.innerHTML = cart.length ? cart.map(item => `${item.name} - ${item.price}₽`).join('<br>') : 'Корзина пуста';
     }
 
-    // Отправка заказа в чат
     function sendOrder() {
-      if (cart.length === 0) {
+      if (!cart.length) {
         alert('Корзина пуста!');
         return;
       }
-      const orderText = cart.map(item => `${item.name} - ${item.price}₽`).join('\n');
-      tg.sendData(`Заказ:\n${orderText}\nИтого: ${cart.reduce((sum, item) => sum + item.price, 0)}₽`);
+      const order = cart.map(item => `${item.name} - ${item.price}₽`).join('\n');
+      if (tg) {
+        tg.sendData(`Заказ:\n${order}\nИтого: ${cart.reduce((sum, item) => sum + item.price, 0)}₽`);
+      } else {
+        console.log('Telegram Web App not available. Order:', order);
+      }
     }
 
-    // Инициализация
     renderCatalog();
   </script>
 </body>
